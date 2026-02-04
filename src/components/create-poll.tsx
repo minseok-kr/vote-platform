@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, Loader2, Calendar, Tag } from "lucide-react";
 import type { PollCategory } from "@/types";
+import { getApiUrl } from "@/lib/utils";
 
 const CATEGORIES: { value: PollCategory; label: string; color: string }[] = [
   { value: "tech", label: "기술", color: "var(--category-tech)" },
@@ -73,7 +74,7 @@ export function CreatePoll() {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + duration);
 
-      const response = await fetch("/api/polls", {
+      const response = await fetch(getApiUrl("/api/polls"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

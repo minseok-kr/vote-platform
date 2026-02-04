@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { BarChart3, Users, Vote, TrendingUp, Loader2 } from "lucide-react";
+import { getApiUrl } from "@/lib/utils";
 
 interface Stats {
   totalPolls: number;
@@ -31,7 +32,7 @@ export function StatsDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch("/api/stats");
+        const response = await fetch(getApiUrl("/api/stats"));
         const result = await response.json();
         if (result.success) {
           setStats(result.data);

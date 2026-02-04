@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
+import { getApiUrl } from "@/lib/utils";
 
 interface ExportButtonProps {
   pollId: string;
@@ -13,7 +14,7 @@ export function ExportButton({ pollId }: ExportButtonProps) {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const response = await fetch(`/api/polls/${pollId}/export`);
+      const response = await fetch(getApiUrl(`/api/polls/${pollId}/export`));
 
       if (!response.ok) {
         throw new Error("Export failed");

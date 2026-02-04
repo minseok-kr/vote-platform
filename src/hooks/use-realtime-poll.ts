@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { PollWithOptions } from "@/types";
+import { getApiUrl } from "@/lib/utils";
 
 export function useRealtimePoll(initialPoll: PollWithOptions) {
   const [poll, setPoll] = useState<PollWithOptions>(initialPoll);
 
   const fetchLatestPoll = useCallback(async () => {
     try {
-      const res = await fetch(`/poll/api/polls/${initialPoll.id}`);
+      const res = await fetch(getApiUrl(`/api/polls/${initialPoll.id}`));
       const data = await res.json();
 
       if (data.success && data.data) {

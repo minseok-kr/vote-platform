@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Flame, Users, Check, Clock } from "lucide-react";
 import type { PollWithOptions } from "@/types";
 import { getVisitorId } from "@/lib/visitor";
-import { formatTimeLeft, formatVotes } from "@/lib/utils";
+import { formatTimeLeft, formatVotes, getApiUrl } from "@/lib/utils";
 
 interface FeaturedPollProps {
   poll: PollWithOptions;
@@ -24,7 +24,7 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
     setIsSubmitting(true);
     try {
       const visitorId = getVisitorId();
-      const response = await fetch(`/api/polls/${poll.id}/vote`, {
+      const response = await fetch(getApiUrl(`/api/polls/${poll.id}/vote`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

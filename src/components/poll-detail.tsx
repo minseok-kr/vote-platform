@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Users, Check, Clock, Flame } from "lucide-react";
 import type { PollWithOptions, PollCategory } from "@/types";
 import { getVisitorId } from "@/lib/visitor";
-import { formatTimeLeft, formatVotes } from "@/lib/utils";
+import { formatTimeLeft, formatVotes, getApiUrl } from "@/lib/utils";
 import { ShareButton } from "./share-button";
 import { AnimatedBar } from "./animated-bar";
 import { BookmarkButton } from "./bookmark-button";
@@ -51,7 +51,7 @@ export function PollDetail({ poll }: PollDetailProps) {
       try {
         const visitorId = getVisitorId();
         const response = await fetch(
-          `/api/polls/${poll.id}/vote?visitorId=${visitorId}`
+          getApiUrl(`/api/polls/${poll.id}/vote?visitorId=${visitorId}`)
         );
         const result = await response.json();
         if (result.hasVoted) {
@@ -75,7 +75,7 @@ export function PollDetail({ poll }: PollDetailProps) {
     setIsSubmitting(true);
     try {
       const visitorId = getVisitorId();
-      const response = await fetch(`/api/polls/${poll.id}/vote`, {
+      const response = await fetch(getApiUrl(`/api/polls/${poll.id}/vote`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search, X, Loader2, Users, Clock } from "lucide-react";
 import type { PollWithOptions, PollCategory } from "@/types";
-import { formatTimeLeft, formatVotes } from "@/lib/utils";
+import { formatTimeLeft, formatVotes, getApiUrl } from "@/lib/utils";
 
 const CATEGORY_STYLES: Record<
   PollCategory,
@@ -37,7 +37,7 @@ export function SearchPolls() {
 
     try {
       const response = await fetch(
-        `/api/polls/search?q=${encodeURIComponent(searchQuery)}`
+        getApiUrl(`/api/polls/search?q=${encodeURIComponent(searchQuery)}`)
       );
       const data = await response.json();
 

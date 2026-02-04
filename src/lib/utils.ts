@@ -1,3 +1,9 @@
+// API base path for client-side fetch
+export function getApiUrl(path: string): string {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "/poll";
+  return `${basePath}${path}`;
+}
+
 // Time utilities
 export function formatTimeLeft(expiresAt: string | null): string {
   if (!expiresAt) {
