@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sshpass:*)",
+      "Bash(cat:*)",
+      "Bash(tar:*)"
+    ]
+  }
+}

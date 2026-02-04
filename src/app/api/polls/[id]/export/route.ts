@@ -5,6 +5,23 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+interface PollOption {
+  text: string;
+  votes: number;
+  percentage: number;
+}
+
+interface PollData {
+  id: string;
+  question: string;
+  category: string;
+  status: string;
+  total_votes: number;
+  created_at: string;
+  expires_at: string;
+  options: PollOption[];
+}
+
 // GET /api/polls/[id]/export - Export poll results as CSV
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -25,24 +42,26 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const pollData = poll as PollData;
+
     // Build CSV content
     const rows: string[] = [];
 
     // Header
     rows.push("Poll Export");
     rows.push("");
-    rows.push(`Question,"${escapeCSV(poll.question)}"`);
-    rows.push(`Category,${poll.category}`);
-    rows.push(`Status,${poll.status}`);
-    rows.push(`Total Votes,${poll.total_votes}`);
-    rows.push(`Created At,${poll.created_at}`);
-    rows.push(`Expires At,${poll.expires_at}`);
+    rows.push(`Question,"${escapeCSV(pollData.question)}"`);
+    rows.push(`Category,${pollData.category}`);
+    rows.push(`Status,${pollData.status}`);
+    rows.push(`Total Votes,${pollData.total_votes}`);
+    rows.push(`Created At,${pollData.created_at}`);
+    rows.push(`Expires At,${pollData.expires_at}`);
     rows.push("");
     rows.push("Results");
     rows.push("Option,Votes,Percentage");
 
     // Options
-    poll.options.forEach((option: { text: string; votes: number; percentage: number }) => {
+    pollData.options.forEach((option: PollOption) => {
       rows.push(`"${escapeCSV(option.text)}",${option.votes},${option.percentage}%`);
     });
 
