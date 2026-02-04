@@ -34,14 +34,17 @@ export function FeaturedPoll({ poll }: FeaturedPollProps) {
       });
 
       const result = await response.json();
+      console.log("Vote response:", result);
       if (result.success) {
         setHasVoted(true);
         if (result.data) {
           setCurrentPoll(result.data);
         }
+      } else {
+        console.error("Vote failed:", result.error);
       }
     } catch (error) {
-      console.error("Vote failed:", error);
+      console.error("Vote error:", error);
     } finally {
       setIsSubmitting(false);
     }
