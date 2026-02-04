@@ -84,7 +84,9 @@ export function PollDetail({ poll }: PollDetailProps) {
   };
 
   const timeLeft = formatTimeLeft(currentPoll.expires_at);
-  const isExpired = new Date(currentPoll.expires_at) < new Date();
+  const isExpired = currentPoll.expires_at
+    ? new Date(currentPoll.expires_at) < new Date()
+    : false;
   const isActive = currentPoll.status === "active" && !isExpired;
 
   return (

@@ -49,10 +49,11 @@ export function AllPolls({ polls }: AllPollsProps) {
         result.sort((a, b) => b.total_votes - a.total_votes);
         break;
       case "ending":
-        result.sort(
-          (a, b) =>
-            new Date(a.expires_at).getTime() - new Date(b.expires_at).getTime()
-        );
+        result.sort((a, b) => {
+          const aTime = a.expires_at ? new Date(a.expires_at).getTime() : Infinity;
+          const bTime = b.expires_at ? new Date(b.expires_at).getTime() : Infinity;
+          return aTime - bTime;
+        });
         break;
       case "recent":
       default:

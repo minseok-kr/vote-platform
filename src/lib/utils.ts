@@ -1,5 +1,9 @@
 // Time utilities
-export function formatTimeLeft(expiresAt: string): string {
+export function formatTimeLeft(expiresAt: string | null): string {
+  if (!expiresAt) {
+    return "무기한";
+  }
+
   const now = new Date();
   const expires = new Date(expiresAt);
   const diff = expires.getTime() - now.getTime();

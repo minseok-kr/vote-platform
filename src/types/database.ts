@@ -154,7 +154,7 @@ export interface Poll {
   is_featured: boolean;
   total_votes: number;
   created_at: string;
-  expires_at: string;
+  expires_at: string | null;
   updated_at: string;
 }
 
