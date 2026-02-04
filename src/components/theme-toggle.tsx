@@ -10,7 +10,7 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <button
-        className="w-10 h-10 flex items-center justify-center border border-[var(--border-primary)]"
+        className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-sm)] bg-[var(--bg-muted)]"
         aria-label="테마 변경"
       >
         <div className="w-[18px] h-[18px]" />
@@ -21,7 +21,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="w-10 h-10 flex items-center justify-center border border-[var(--border-primary)] hover:border-[var(--border-secondary)] transition-colors"
+      className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-sm)] bg-[var(--bg-muted)] hover:bg-[var(--bg-active)] transition-colors"
       aria-label={theme === "light" ? "다크 모드로 변경" : "라이트 모드로 변경"}
       title={theme === "light" ? "다크 모드" : "라이트 모드"}
     >

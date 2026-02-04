@@ -1,18 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Cormorant_Garamond } from "next/font/google";
+import { Outfit } from "next/font/google";
 import { ToastProvider } from "@/components/toast";
 import { KeyboardShortcutsProvider } from "@/components/keyboard-shortcuts-provider";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
-});
-
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -56,7 +51,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#2563EB",
+  themeColor: "#3182F6",
 };
 
 export default function RootLayout({
@@ -66,7 +61,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className={`${inter.variable} ${cormorant.variable} antialiased`}>
+      <body className={`${outfit.variable} antialiased`}>
         <ToastProvider>
           <KeyboardShortcutsProvider>{children}</KeyboardShortcutsProvider>
         </ToastProvider>

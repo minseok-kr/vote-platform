@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, List, Users, Clock, ChevronRight } from "lucide-react";
 import type { PollWithOptions, PollCategory } from "@/types";
 import { formatTimeLeft, formatVotes } from "@/lib/utils";
 
@@ -73,11 +73,14 @@ export function AllPolls({ polls }: AllPollsProps) {
     return (
       <section>
         <div className="flex items-center justify-between mb-5">
-          <h2 className="font-display text-xl md:text-2xl font-medium text-[var(--text-primary)]">
-            All Polls
-          </h2>
+          <div className="flex items-center gap-2">
+            <List size={20} className="text-[var(--text-secondary)]" />
+            <h2 className="text-xl font-bold text-[var(--text-primary)]">
+              전체 투표
+            </h2>
+          </div>
         </div>
-        <div className="p-8 text-center text-[var(--text-muted)] border border-[var(--border-primary)]">
+        <div className="card-toss p-8 text-center text-[var(--text-tertiary)]">
           아직 진행 중인 투표가 없습니다.
         </div>
       </section>
@@ -88,10 +91,13 @@ export function AllPolls({ polls }: AllPollsProps) {
     <section>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-        <h2 className="font-display text-xl md:text-2xl font-medium text-[var(--text-primary)]">
-          All Polls
-        </h2>
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2">
+          <List size={20} className="text-[var(--text-secondary)]" />
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">
+            전체 투표
+          </h2>
+        </div>
+        <div className="flex items-center gap-2">
           {/* Category Dropdown */}
           <div className="relative">
             <button
@@ -99,14 +105,14 @@ export function AllPolls({ polls }: AllPollsProps) {
                 setIsCategoryOpen(!isCategoryOpen);
                 setIsSortOpen(false);
               }}
-              className="flex items-center gap-2 px-3 py-2 border border-[var(--border-primary)] hover:border-[var(--border-secondary)] transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-[var(--bg-card)] rounded-[var(--radius-sm)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all"
             >
-              <span className="text-xs font-medium text-[var(--text-secondary)]">
+              <span className="text-sm font-medium text-[var(--text-primary)]">
                 {selectedCategory?.label}
               </span>
               <ChevronDown
-                size={14}
-                className={`text-[var(--text-muted)] transition-transform ${isCategoryOpen ? "rotate-180" : ""}`}
+                size={16}
+                className={`text-[var(--text-tertiary)] transition-transform ${isCategoryOpen ? "rotate-180" : ""}`}
               />
             </button>
 
@@ -116,7 +122,7 @@ export function AllPolls({ polls }: AllPollsProps) {
                   className="fixed inset-0 z-40"
                   onClick={() => setIsCategoryOpen(false)}
                 />
-                <div className="absolute right-0 top-full mt-1 w-40 bg-[var(--bg-card)] border border-[var(--border-primary)] shadow-lg z-50">
+                <div className="absolute right-0 top-full mt-2 w-44 bg-[var(--bg-card)] rounded-[var(--radius-md)] shadow-[var(--shadow-lg)] z-50 overflow-hidden">
                   {CATEGORIES.map((cat) => (
                     <button
                       key={cat.value}
@@ -124,11 +130,15 @@ export function AllPolls({ polls }: AllPollsProps) {
                         setCategory(cat.value);
                         setIsCategoryOpen(false);
                       }}
-                      className="flex items-center justify-between w-full px-3 py-2 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-active)] transition-colors"
+                      className={`flex items-center justify-between w-full px-4 py-3 text-sm transition-colors ${
+                        category === cat.value
+                          ? "bg-[var(--accent-blue-light)] text-[var(--accent-blue)] font-semibold"
+                          : "text-[var(--text-primary)] hover:bg-[var(--bg-muted)]"
+                      }`}
                     >
                       {cat.label}
                       {category === cat.value && (
-                        <Check size={14} className="text-[var(--accent-blue)]" />
+                        <Check size={16} className="text-[var(--accent-blue)]" />
                       )}
                     </button>
                   ))}
@@ -144,14 +154,14 @@ export function AllPolls({ polls }: AllPollsProps) {
                 setIsSortOpen(!isSortOpen);
                 setIsCategoryOpen(false);
               }}
-              className="flex items-center gap-2 px-3 py-2 border border-[var(--border-primary)] hover:border-[var(--border-secondary)] transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-[var(--bg-card)] rounded-[var(--radius-sm)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all"
             >
-              <span className="text-xs font-medium text-[var(--text-secondary)]">
+              <span className="text-sm font-medium text-[var(--text-primary)]">
                 {selectedSort?.label}
               </span>
               <ChevronDown
-                size={14}
-                className={`text-[var(--text-muted)] transition-transform ${isSortOpen ? "rotate-180" : ""}`}
+                size={16}
+                className={`text-[var(--text-tertiary)] transition-transform ${isSortOpen ? "rotate-180" : ""}`}
               />
             </button>
 
@@ -161,7 +171,7 @@ export function AllPolls({ polls }: AllPollsProps) {
                   className="fixed inset-0 z-40"
                   onClick={() => setIsSortOpen(false)}
                 />
-                <div className="absolute right-0 top-full mt-1 w-32 bg-[var(--bg-card)] border border-[var(--border-primary)] shadow-lg z-50">
+                <div className="absolute right-0 top-full mt-2 w-36 bg-[var(--bg-card)] rounded-[var(--radius-md)] shadow-[var(--shadow-lg)] z-50 overflow-hidden">
                   {SORT_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
@@ -169,11 +179,15 @@ export function AllPolls({ polls }: AllPollsProps) {
                         setSort(opt.value);
                         setIsSortOpen(false);
                       }}
-                      className="flex items-center justify-between w-full px-3 py-2 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-active)] transition-colors"
+                      className={`flex items-center justify-between w-full px-4 py-3 text-sm transition-colors ${
+                        sort === opt.value
+                          ? "bg-[var(--accent-blue-light)] text-[var(--accent-blue)] font-semibold"
+                          : "text-[var(--text-primary)] hover:bg-[var(--bg-muted)]"
+                      }`}
                     >
                       {opt.label}
                       {sort === opt.value && (
-                        <Check size={14} className="text-[var(--accent-blue)]" />
+                        <Check size={16} className="text-[var(--accent-blue)]" />
                       )}
                     </button>
                   ))}
@@ -184,47 +198,46 @@ export function AllPolls({ polls }: AllPollsProps) {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="border border-[var(--border-primary)]">
-        {/* Table Header - Hidden on mobile */}
-        <div className="hidden md:flex items-center px-5 py-3.5 bg-[var(--bg-card)]">
-          <span className="flex-1 text-[10px] font-semibold text-[var(--text-muted)] tracking-wider">
-            QUESTION
-          </span>
-          <span className="w-[120px] text-right text-[10px] font-semibold text-[var(--text-muted)] tracking-wider">
-            VOTES
-          </span>
-          <span className="w-[120px] text-right text-[10px] font-semibold text-[var(--text-muted)] tracking-wider">
-            TIME LEFT
-          </span>
-        </div>
-
-        {/* Results Count */}
+      {/* Poll List */}
+      <div className="card-toss overflow-hidden">
         {filteredAndSortedPolls.length === 0 ? (
-          <div className="p-8 text-center text-[var(--text-muted)]">
+          <div className="p-8 text-center text-[var(--text-tertiary)]">
             해당 조건의 투표가 없습니다.
           </div>
         ) : (
-          /* Table Rows */
-          filteredAndSortedPolls.map((poll) => (
-            <Link
-              key={poll.id}
-              href={`/polls/${poll.id}`}
-              className="flex flex-col md:flex-row md:items-center px-4 md:px-5 py-4 border-t border-[var(--border-primary)] hover:bg-[var(--bg-card)] transition-colors cursor-pointer"
-            >
-              <span className="flex-1 text-sm font-medium text-[var(--text-primary)] mb-2 md:mb-0">
-                {poll.question}
-              </span>
-              <div className="flex items-center justify-between md:justify-end gap-4">
-                <span className="text-sm font-medium text-[var(--text-secondary)] md:w-[120px] md:text-right">
-                  {formatVotes(poll.total_votes)}명
-                </span>
-                <span className="text-sm font-medium text-[var(--accent-blue)] md:w-[120px] md:text-right">
-                  {formatTimeLeft(poll.expires_at)}
-                </span>
-              </div>
-            </Link>
-          ))
+          <div className="divide-y divide-[var(--border-primary)]">
+            {filteredAndSortedPolls.map((poll) => (
+              <Link
+                key={poll.id}
+                href={`/polls/${poll.id}`}
+                className="flex items-center px-5 py-4 hover:bg-[var(--bg-muted)] transition-colors cursor-pointer group"
+              >
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate group-hover:text-[var(--accent-blue)] transition-colors">
+                    {poll.question}
+                  </h3>
+                  <div className="flex items-center gap-4 mt-1.5">
+                    <div className="flex items-center gap-1 text-[var(--text-tertiary)]">
+                      <Users size={14} />
+                      <span className="text-xs font-medium">
+                        {formatVotes(poll.total_votes)}명
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 text-[var(--text-tertiary)]">
+                      <Clock size={14} />
+                      <span className="text-xs font-medium">
+                        {formatTimeLeft(poll.expires_at)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight
+                  size={20}
+                  className="text-[var(--text-muted)] group-hover:text-[var(--accent-blue)] transition-colors flex-shrink-0"
+                />
+              </Link>
+            ))}
+          </div>
         )}
       </div>
     </section>

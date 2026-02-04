@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Loader2 } from "lucide-react";
+import { Plus, X, Loader2, Calendar, Tag } from "lucide-react";
 import type { PollCategory } from "@/types";
 
-const CATEGORIES: { value: PollCategory; label: string }[] = [
-  { value: "tech", label: "기술" },
-  { value: "sports", label: "스포츠" },
-  { value: "entertainment", label: "엔터테인먼트" },
-  { value: "politics", label: "정치" },
-  { value: "lifestyle", label: "라이프스타일" },
-  { value: "business", label: "비즈니스" },
-  { value: "other", label: "기타" },
+const CATEGORIES: { value: PollCategory; label: string; color: string }[] = [
+  { value: "tech", label: "기술", color: "var(--category-tech)" },
+  { value: "sports", label: "스포츠", color: "var(--category-sports)" },
+  { value: "entertainment", label: "엔터테인먼트", color: "var(--category-entertainment)" },
+  { value: "politics", label: "정치", color: "var(--category-politics)" },
+  { value: "lifestyle", label: "라이프스타일", color: "var(--category-lifestyle)" },
+  { value: "business", label: "비즈니스", color: "var(--category-tech)" },
+  { value: "other", label: "기타", color: "var(--bg-muted)" },
 ];
 
 const DURATION_OPTIONS = [
@@ -100,9 +100,10 @@ export function CreatePoll() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="font-display text-[32px] font-medium text-[var(--text-primary)]">
+        <h1 className="text-2xl md:text-[28px] font-bold text-[var(--text-primary)]">
           새 투표 만들기
         </h1>
         <p className="mt-2 text-sm text-[var(--text-secondary)]">
@@ -113,59 +114,63 @@ export function CreatePoll() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Error Message */}
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 text-red-600 text-sm">
+          <div className="p-4 bg-[var(--error-light)] rounded-[var(--radius-md)] text-[var(--error)] text-sm font-medium">
             {error}
           </div>
         )}
 
-        {/* Question */}
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold text-[var(--text-muted)] tracking-wider">
-            질문 *
-          </label>
-          <input
-            type="text"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="투표 질문을 입력하세요"
-            maxLength={200}
-            className="w-full px-4 py-3 bg-[var(--bg-card)] border border-[var(--border-primary)] text-[var(--text-primary)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-blue)]"
-          />
-          <span className="text-xs text-[var(--text-muted)]">
-            {question.length}/200
-          </span>
+        {/* Question Card */}
+        <div className="card-toss p-6 space-y-5">
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-[var(--text-primary)]">
+              질문 *
+            </label>
+            <input
+              type="text"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="투표 질문을 입력하세요"
+              maxLength={200}
+              className="w-full px-4 py-3.5 bg-[var(--bg-muted)] rounded-[var(--radius-md)] text-[var(--text-primary)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition-all"
+            />
+            <span className="text-xs text-[var(--text-muted)]">
+              {question.length}/200
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-[var(--text-primary)]">
+              설명 (선택)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="투표에 대한 추가 설명을 입력하세요"
+              maxLength={500}
+              rows={3}
+              className="w-full px-4 py-3.5 bg-[var(--bg-muted)] rounded-[var(--radius-md)] text-[var(--text-primary)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] resize-none transition-all"
+            />
+          </div>
         </div>
 
-        {/* Description */}
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold text-[var(--text-muted)] tracking-wider">
-            설명 (선택)
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="투표에 대한 추가 설명을 입력하세요"
-            maxLength={500}
-            rows={3}
-            className="w-full px-4 py-3 bg-[var(--bg-card)] border border-[var(--border-primary)] text-[var(--text-primary)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-blue)] resize-none"
-          />
-        </div>
-
-        {/* Category */}
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold text-[var(--text-muted)] tracking-wider">
-            카테고리
-          </label>
+        {/* Category Card */}
+        <div className="card-toss p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Tag size={18} className="text-[var(--text-secondary)]" />
+            <label className="text-sm font-semibold text-[var(--text-primary)]">
+              카테고리
+            </label>
+          </div>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.value}
                 type="button"
                 onClick={() => setCategory(cat.value)}
-                className={`px-3 py-1.5 text-xs font-medium border transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-[var(--radius-full)] transition-all ${
                   category === cat.value
-                    ? "bg-[var(--accent-blue)] text-white border-[var(--accent-blue)]"
-                    : "bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-primary)] hover:border-[var(--border-secondary)]"
+                    ? "bg-[var(--accent-blue)] text-white shadow-[var(--shadow-button)]"
+                    : "bg-[var(--bg-muted)] text-[var(--text-secondary)] hover:bg-[var(--bg-active)]"
                 }`}
               >
                 {cat.label}
@@ -174,59 +179,69 @@ export function CreatePoll() {
           </div>
         </div>
 
-        {/* Options */}
-        <div className="space-y-3">
-          <label className="block text-xs font-semibold text-[var(--text-muted)] tracking-wider">
+        {/* Options Card */}
+        <div className="card-toss p-6 space-y-4">
+          <label className="block text-sm font-semibold text-[var(--text-primary)]">
             선택지 * (최소 2개, 최대 6개)
           </label>
-          {options.map((option, index) => (
-            <div key={index} className="flex gap-2">
-              <input
-                type="text"
-                value={option}
-                onChange={(e) => updateOption(index, e.target.value)}
-                placeholder={`선택지 ${index + 1}`}
-                maxLength={100}
-                className="flex-1 px-4 py-3 bg-[var(--bg-card)] border border-[var(--border-primary)] text-[var(--text-primary)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-blue)]"
-              />
-              {options.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => removeOption(index)}
-                  className="px-3 py-3 text-[var(--text-muted)] hover:text-red-500 border border-[var(--border-primary)] hover:border-red-300 transition-colors"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-          ))}
+          <div className="space-y-3">
+            {options.map((option, index) => (
+              <div key={index} className="flex gap-2">
+                <div className="flex-1 relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[var(--accent-blue-light)] text-[var(--accent-blue)] text-xs font-semibold flex items-center justify-center">
+                    {index + 1}
+                  </div>
+                  <input
+                    type="text"
+                    value={option}
+                    onChange={(e) => updateOption(index, e.target.value)}
+                    placeholder={`선택지 ${index + 1}`}
+                    maxLength={100}
+                    className="w-full pl-14 pr-4 py-3.5 bg-[var(--bg-muted)] rounded-[var(--radius-md)] text-[var(--text-primary)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)] transition-all"
+                  />
+                </div>
+                {options.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => removeOption(index)}
+                    className="w-12 h-12 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
           {options.length < 6 && (
             <button
               type="button"
               onClick={addOption}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--accent-blue)] border border-dashed border-[var(--border-primary)] hover:border-[var(--accent-blue)] transition-colors w-full justify-center"
+              className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-[var(--accent-blue)] bg-[var(--accent-blue-light)] rounded-[var(--radius-md)] hover:bg-[var(--bg-active)] transition-colors w-full justify-center"
             >
-              <Plus size={16} />
+              <Plus size={18} />
               선택지 추가
             </button>
           )}
         </div>
 
-        {/* Duration */}
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold text-[var(--text-muted)] tracking-wider">
-            투표 기간
-          </label>
-          <div className="flex gap-2">
+        {/* Duration Card */}
+        <div className="card-toss p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Calendar size={18} className="text-[var(--text-secondary)]" />
+            <label className="text-sm font-semibold text-[var(--text-primary)]">
+              투표 기간
+            </label>
+          </div>
+          <div className="flex flex-wrap gap-2">
             {DURATION_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => setDuration(opt.value)}
-                className={`px-4 py-2 text-xs font-medium border transition-colors ${
+                className={`px-5 py-2.5 text-sm font-medium rounded-[var(--radius-md)] transition-all ${
                   duration === opt.value
-                    ? "bg-[var(--accent-blue)] text-white border-[var(--accent-blue)]"
-                    : "bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-primary)] hover:border-[var(--border-secondary)]"
+                    ? "bg-[var(--accent-blue)] text-white shadow-[var(--shadow-button)]"
+                    : "bg-[var(--bg-muted)] text-[var(--text-secondary)] hover:bg-[var(--bg-active)]"
                 }`}
               >
                 {opt.label}
@@ -236,22 +251,20 @@ export function CreatePoll() {
         </div>
 
         {/* Submit */}
-        <div className="pt-4 border-t border-[var(--border-primary)]">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full px-8 py-4 bg-[var(--accent-blue)] text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                생성 중...
-              </>
-            ) : (
-              "투표 생성하기"
-            )}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full py-4 bg-[var(--accent-blue)] text-white text-base font-semibold rounded-[var(--radius-md)] shadow-[var(--shadow-button)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none hover:shadow-[0_6px_20px_rgba(49,130,246,0.32)] transition-all hover:-translate-y-0.5 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              생성 중...
+            </>
+          ) : (
+            "투표 생성하기"
+          )}
+        </button>
       </form>
     </div>
   );

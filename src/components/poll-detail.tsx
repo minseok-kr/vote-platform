@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Users, Check, Clock } from "lucide-react";
-import type { PollWithOptions } from "@/types";
+import { ArrowLeft, Users, Check, Clock, Flame } from "lucide-react";
+import type { PollWithOptions, PollCategory } from "@/types";
 import { getVisitorId } from "@/lib/visitor";
 import { formatTimeLeft, formatVotes } from "@/lib/utils";
 import { ShareButton } from "./share-button";
@@ -16,7 +16,20 @@ interface PollDetailProps {
   poll: PollWithOptions;
 }
 
-const OPTION_COLORS = ["#2563EB", "#3B82F6", "#60A5FA", "#93C5FD", "#BFDBFE"];
+const OPTION_COLORS = ["#3182F6", "#4A9EFF", "#7AB8FF", "#A8D1FF", "#D4E8FF"];
+
+const CATEGORY_STYLES: Record<
+  PollCategory,
+  { bg: string; text: string; label: string }
+> = {
+  tech: { bg: "var(--category-tech)", text: "var(--category-tech-text)", label: "기술" },
+  sports: { bg: "var(--category-sports)", text: "var(--category-sports-text)", label: "스포츠" },
+  entertainment: { bg: "var(--category-entertainment)", text: "var(--category-entertainment-text)", label: "엔터" },
+  politics: { bg: "var(--category-politics)", text: "var(--category-politics-text)", label: "정치" },
+  lifestyle: { bg: "var(--category-lifestyle)", text: "var(--category-lifestyle-text)", label: "라이프" },
+  business: { bg: "var(--category-tech)", text: "var(--category-tech-text)", label: "비즈니스" },
+  other: { bg: "var(--bg-muted)", text: "var(--text-secondary)", label: "기타" },
+};
 
 export function PollDetail({ poll }: PollDetailProps) {
   // Use realtime updates for the poll
@@ -30,6 +43,7 @@ export function PollDetail({ poll }: PollDetailProps) {
 
   // Use realtime poll data
   const currentPoll = realtimePoll;
+  const categoryStyle = CATEGORY_STYLES[currentPoll.category as PollCategory] || CATEGORY_STYLES.other;
 
   // Check if user already voted
   useEffect(() => {
@@ -90,14 +104,14 @@ export function PollDetail({ poll }: PollDetailProps) {
   const isActive = currentPoll.status === "active" && !isExpired;
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
       {/* Back Link & Share */}
       <div className="flex items-center justify-between">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent-blue)] transition-colors"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={18} />
           돌아가기
         </Link>
         <div className="flex items-center gap-2">
@@ -107,40 +121,52 @@ export function PollDetail({ poll }: PollDetailProps) {
         </div>
       </div>
 
-      {/* Poll Card */}
-      <div className="p-8 bg-[var(--bg-card)] border border-[var(--border-primary)]">
-        {/* Status Badge */}
-        <div className="flex items-center gap-2 mb-4">
-          {isActive ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--accent-blue)]">
-              <Clock size={12} className="text-white" />
-              <span className="text-[10px] font-semibold text-white tracking-wider">
-                {timeLeft}
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--text-muted)]">
-              <span className="text-[10px] font-semibold text-white tracking-wider">
-                CLOSED
-              </span>
-            </div>
-          )}
-          <span className="text-xs font-medium text-[var(--text-muted)] capitalize">
-            {currentPoll.category}
+      {/* Badge & Meta */}
+      <div className="flex items-center gap-3">
+        {isActive ? (
+          <span className="badge badge-hot">
+            <Flame size={12} />
+            진행중
           </span>
-        </div>
-
-        {/* Question */}
-        <h1 className="font-display text-[32px] font-medium text-[var(--text-primary)] mb-3">
-          {currentPoll.question}
-        </h1>
-
-        {currentPoll.description && (
-          <p className="text-sm text-[var(--text-secondary)] mb-6">
-            {currentPoll.description}
-          </p>
+        ) : (
+          <span className="badge" style={{ background: "var(--text-muted)", color: "white" }}>
+            마감
+          </span>
         )}
+        <span
+          className="badge"
+          style={{ backgroundColor: categoryStyle.bg, color: categoryStyle.text }}
+        >
+          {categoryStyle.label}
+        </span>
+        {isActive && (
+          <div className="flex items-center gap-1 text-[var(--text-tertiary)]">
+            <Clock size={14} />
+            <span className="text-sm">{timeLeft}</span>
+          </div>
+        )}
+      </div>
 
+      {/* Question */}
+      <h1 className="text-2xl md:text-[32px] font-bold text-[var(--text-primary)] leading-tight">
+        {currentPoll.question}
+      </h1>
+
+      {/* Description */}
+      {currentPoll.description && (
+        <p className="text-[var(--text-secondary)]">{currentPoll.description}</p>
+      )}
+
+      {/* Participation Count */}
+      <div className="flex items-center gap-1.5 text-[var(--text-tertiary)]">
+        <Users size={16} />
+        <span className="text-sm font-medium">
+          {formatVotes(currentPoll.total_votes)}명 참여
+        </span>
+      </div>
+
+      {/* Poll Card */}
+      <div className="card-toss p-6">
         {/* Options */}
         <div className="space-y-3 mb-6">
           {currentPoll.options.map((option, index) => {
@@ -156,12 +182,19 @@ export function PollDetail({ poll }: PollDetailProps) {
                   isActive && !hasVoted && setSelectedOption(option.id)
                 }
                 disabled={hasVoted || !isActive}
-                className={`relative w-full h-14 bg-[var(--bg-active)] text-left transition-all ${
+                className={`relative w-full overflow-hidden rounded-[var(--radius-md)] transition-all ${
                   isActive && !hasVoted
-                    ? "hover:bg-[var(--bg-card)] cursor-pointer"
+                    ? "cursor-pointer hover:scale-[1.01]"
                     : "cursor-default"
-                } ${isSelected && !hasVoted ? "ring-2 ring-[var(--accent-blue)]" : ""}`}
+                } ${
+                  isSelected && !hasVoted
+                    ? "ring-2 ring-[var(--accent-blue)] ring-offset-2"
+                    : ""
+                }`}
               >
+                {/* Background */}
+                <div className="absolute inset-0 bg-[var(--bg-muted)]" />
+
                 {/* Progress Bar */}
                 {showResults && (
                   <AnimatedBar
@@ -171,13 +204,29 @@ export function PollDetail({ poll }: PollDetailProps) {
                     animate={hasVoted && !isCheckingVote}
                   />
                 )}
+
                 {/* Content */}
-                <div className="absolute inset-0 flex items-center justify-between px-4">
-                  <div className="flex items-center gap-2">
-                    {isVotedOption && (
-                      <Check size={18} className="text-white" />
-                    )}
-                    <span className="text-sm font-medium text-[var(--text-primary)]">
+                <div className="relative flex items-center justify-between px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    {/* Radio/Check indicator */}
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        isSelected || isVotedOption
+                          ? "border-[var(--accent-blue)] bg-[var(--accent-blue)]"
+                          : "border-[var(--border-secondary)]"
+                      }`}
+                    >
+                      {(isSelected || isVotedOption) && (
+                        <Check size={12} className="text-white" />
+                      )}
+                    </div>
+                    <span
+                      className={`text-sm font-medium ${
+                        isSelected || isVotedOption
+                          ? "text-[var(--accent-blue)]"
+                          : "text-[var(--text-primary)]"
+                      }`}
+                    >
                       {option.text}
                     </span>
                   </div>
@@ -186,7 +235,7 @@ export function PollDetail({ poll }: PollDetailProps) {
                       <span className="text-xs text-[var(--text-muted)]">
                         {formatVotes(option.votes)}표
                       </span>
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">
+                      <span className="text-sm font-bold text-[var(--text-primary)]">
                         {option.percentage}%
                       </span>
                     </div>
@@ -197,30 +246,21 @@ export function PollDetail({ poll }: PollDetailProps) {
           })}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-[var(--border-primary)]">
-          <div className="flex items-center gap-1.5">
-            <Users size={16} className="text-[var(--text-muted)]" />
-            <span className="text-[13px] font-medium text-[var(--text-secondary)]">
-              {formatVotes(currentPoll.total_votes)}명 참여
-            </span>
+        {/* Vote Button */}
+        {isActive && !hasVoted && !isCheckingVote ? (
+          <button
+            onClick={handleVote}
+            disabled={!selectedOption || isSubmitting}
+            className="w-full py-4 bg-[var(--accent-blue)] text-white text-base font-semibold rounded-[var(--radius-md)] shadow-[var(--shadow-button)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none hover:shadow-[0_6px_20px_rgba(49,130,246,0.32)] transition-all hover:-translate-y-0.5 disabled:hover:translate-y-0"
+          >
+            {isSubmitting ? "투표 중..." : "투표하기"}
+          </button>
+        ) : hasVoted ? (
+          <div className="w-full py-4 bg-[var(--success)] text-white text-base font-semibold rounded-[var(--radius-md)] flex items-center justify-center gap-2">
+            <Check size={20} />
+            투표 완료
           </div>
-
-          {isActive && !hasVoted && !isCheckingVote ? (
-            <button
-              onClick={handleVote}
-              disabled={!selectedOption || isSubmitting}
-              className="px-8 py-3.5 bg-[var(--accent-blue)] text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "투표 중..." : "투표하기"}
-            </button>
-          ) : hasVoted ? (
-            <div className="flex items-center gap-2 px-4 py-2 bg-[var(--success)] text-white text-sm font-medium">
-              <Check size={16} />
-              투표 완료
-            </div>
-          ) : null}
-        </div>
+        ) : null}
       </div>
     </div>
   );

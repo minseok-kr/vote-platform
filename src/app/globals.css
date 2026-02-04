@@ -1,59 +1,121 @@
 @import "tailwindcss";
 
-/* Design System Colors - Light Theme */
+/* Design System Colors - Toss Style Light Theme */
 :root {
   /* Backgrounds */
-  --bg-page: #ffffff;
-  --bg-card: #fafafa;
-  --bg-active: #f0f0f0;
+  --bg-page: #F7F8FA;
+  --bg-card: #FFFFFF;
+  --bg-muted: #F2F4F6;
+  --bg-elevated: #FAFBFC;
+  --bg-active: #E8F3FF;
 
   /* Text */
-  --text-primary: #111111;
-  --text-secondary: #666666;
-  --text-muted: #999999;
+  --text-primary: #191F28;
+  --text-secondary: #4E5968;
+  --text-tertiary: #8B95A1;
+  --text-muted: #B0B8C1;
 
   /* Borders */
-  --border-primary: #e5e5e5;
-  --border-secondary: #d0d0d0;
+  --border-primary: #E5E8EB;
+  --border-secondary: #D1D6DB;
 
-  /* Accents */
-  --accent-blue: #2563eb;
-  --accent-gold: #c9a962;
-  --success: #16a34a;
+  /* Accents - Toss Blue */
+  --accent-blue: #3182F6;
+  --accent-blue-light: #E8F3FF;
+  --accent-blue-dark: #1B64DA;
+
+  /* Status Colors */
+  --success: #00C853;
+  --success-light: #E8F9EE;
+  --warning: #FF8A00;
+  --warning-light: #FFF4E5;
+  --error: #F04452;
+  --error-light: #FEECEE;
+
+  /* Category Colors */
+  --category-tech: #E8F3FF;
+  --category-tech-text: #3182F6;
+  --category-sports: #E8F9EE;
+  --category-sports-text: #00C853;
+  --category-entertainment: #FFF4E5;
+  --category-entertainment-text: #FF8A00;
+  --category-politics: #FEECEE;
+  --category-politics-text: #F04452;
+  --category-lifestyle: #F3E8FF;
+  --category-lifestyle-text: #8B5CF6;
+
+  /* Shadows - Soft Toss style */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-button: 0 4px 16px rgba(49, 130, 246, 0.24);
+
+  /* Border Radius - Rounded Toss style */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
 }
 
-/* Design System Colors - Dark Theme */
+/* Design System Colors - Toss Style Dark Theme */
 [data-theme="dark"] {
   /* Backgrounds */
-  --bg-page: #0a0a0a;
-  --bg-card: #141414;
-  --bg-active: #1f1f1f;
+  --bg-page: #17171C;
+  --bg-card: #1F1F24;
+  --bg-muted: #26262C;
+  --bg-elevated: #2C2C34;
+  --bg-active: #1A2C45;
 
   /* Text */
-  --text-primary: #f5f5f5;
-  --text-secondary: #a3a3a3;
-  --text-muted: #737373;
+  --text-primary: #F2F4F6;
+  --text-secondary: #AEB5BC;
+  --text-tertiary: #6B7684;
+  --text-muted: #4E5968;
 
   /* Borders */
-  --border-primary: #262626;
-  --border-secondary: #404040;
+  --border-primary: #2C2C34;
+  --border-secondary: #404048;
 
-  /* Accents */
-  --accent-blue: #3b82f6;
-  --accent-gold: #d4af37;
-  --success: #22c55e;
+  /* Accents - Toss Blue */
+  --accent-blue: #4A9EFF;
+  --accent-blue-light: #1A2C45;
+  --accent-blue-dark: #3182F6;
+
+  /* Status Colors */
+  --success: #2DD66C;
+  --success-light: #1A3D2A;
+  --warning: #FFAB40;
+  --warning-light: #3D3020;
+  --error: #FF6B6B;
+  --error-light: #3D1A1A;
+
+  /* Category Colors */
+  --category-tech: #1A2C45;
+  --category-tech-text: #4A9EFF;
+  --category-sports: #1A3D2A;
+  --category-sports-text: #2DD66C;
+  --category-entertainment: #3D3020;
+  --category-entertainment-text: #FFAB40;
+  --category-politics: #3D1A1A;
+  --category-politics-text: #FF6B6B;
+  --category-lifestyle: #2D1A45;
+  --category-lifestyle-text: #A78BFA;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-button: 0 4px 16px rgba(74, 158, 255, 0.24);
 }
 
 /* Base Styles */
 body {
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-outfit), system-ui, sans-serif;
   background-color: var(--bg-page);
   color: var(--text-primary);
-}
-
-/* Typography */
-.font-display {
-  font-family: var(--font-cormorant), Georgia, serif;
 }
 
 /* Utility Classes */
@@ -96,4 +158,71 @@ body {
 
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
+}
+
+/* Toss-style Card */
+.card-toss {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* Toss-style Button */
+.btn-toss {
+  background: var(--accent-blue);
+  color: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-button);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-toss:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(49, 130, 246, 0.32);
+}
+
+.btn-toss:active {
+  transform: translateY(0);
+}
+
+/* Badge styles */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-hot {
+  background: var(--accent-blue-light);
+  color: var(--accent-blue);
+}
+
+.badge-tech {
+  background: var(--category-tech);
+  color: var(--category-tech-text);
+}
+
+.badge-sports {
+  background: var(--category-sports);
+  color: var(--category-sports-text);
+}
+
+.badge-entertainment {
+  background: var(--category-entertainment);
+  color: var(--category-entertainment-text);
+}
+
+.badge-politics {
+  background: var(--category-politics);
+  color: var(--category-politics-text);
+}
+
+.badge-lifestyle {
+  background: var(--category-lifestyle);
+  color: var(--category-lifestyle-text);
 }
