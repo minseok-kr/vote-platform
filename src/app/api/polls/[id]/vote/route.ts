@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase";
+import { getDb, Poll } from "@/lib/db";
 import { z } from "zod";
+import { v4 as uuidv4 } from "uuid";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-interface PollRecord {
-  id: string;
-  status: string;
-  ends_at: string | null;
+interface PollWithOptionsRow extends Poll {
+  option_id: string;
+  option_text: string;
+  option_votes: number;
 }
 
 const voteSchema = z.object({
-  optionId: z.string().uuid("Invalid option ID"),
+  optionId: z.string().min(1, "Option ID is required"),
   visitorId: z.string().min(1, "Visitor ID is required"),
 });
 
@@ -33,32 +34,28 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const { optionId, visitorId } = result.data;
-    const supabase = createServerClient();
+    const db = getDb();
 
     // Check if poll exists and is active
-    const { data: poll, error: pollError } = await supabase
-      .from("polls")
-      .select("id, status, ends_at")
-      .eq("id", pollId)
-      .single();
+    const poll = db
+      .prepare("SELECT id, status, expires_at FROM polls WHERE id = ?")
+      .get(pollId) as { id: string; status: string; expires_at: string | null } | undefined;
 
-    if (pollError || !poll) {
+    if (!poll) {
       return NextResponse.json(
         { success: false, error: "Poll not found" },
         { status: 404 }
       );
     }
 
-    const pollData = poll as PollRecord;
-
-    if (pollData.status !== "active") {
+    if (poll.status !== "active") {
       return NextResponse.json(
         { success: false, error: "Poll is not active" },
         { status: 400 }
       );
     }
 
-    if (pollData.ends_at && new Date(pollData.ends_at) < new Date()) {
+    if (poll.expires_at && new Date(poll.expires_at) < new Date()) {
       return NextResponse.json(
         { success: false, error: "Poll has ended" },
         { status: 400 }
@@ -66,14 +63,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Check if option belongs to this poll
-    const { data: option, error: optionError } = await supabase
-      .from("poll_options")
-      .select("id")
-      .eq("id", optionId)
-      .eq("poll_id", pollId)
-      .single();
+    const option = db
+      .prepare("SELECT id FROM poll_options WHERE id = ? AND poll_id = ?")
+      .get(optionId, pollId);
 
-    if (optionError || !option) {
+    if (!option) {
       return NextResponse.json(
         { success: false, error: "Invalid option for this poll" },
         { status: 400 }
@@ -81,12 +75,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Check if visitor already voted
-    const { data: existingVote } = await supabase
-      .from("votes")
-      .select("id")
-      .eq("poll_id", pollId)
-      .eq("visitor_id", visitorId)
-      .single();
+    const existingVote = db
+      .prepare("SELECT id FROM votes WHERE poll_id = ? AND visitor_id = ?")
+      .get(pollId, visitorId);
 
     if (existingVote) {
       return NextResponse.json(
@@ -95,26 +86,67 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Submit vote
-    const { error: voteError } = await supabase.from("votes").insert({
-      poll_id: pollId,
-      option_id: optionId,
-      visitor_id: visitorId,
-    } as never);
+    // Submit vote and increment option votes
+    const now = new Date().toISOString();
 
-    if (voteError) {
-      return NextResponse.json(
-        { success: false, error: "Failed to submit vote" },
-        { status: 500 }
+    const transaction = db.transaction(() => {
+      db.prepare(
+        "INSERT INTO votes (id, poll_id, option_id, visitor_id, created_at) VALUES (?, ?, ?, ?, ?)"
+      ).run(uuidv4(), pollId, optionId, visitorId, now);
+
+      db.prepare("UPDATE poll_options SET votes = votes + 1 WHERE id = ?").run(
+        optionId
       );
-    }
+    });
+
+    transaction();
 
     // Get updated poll data
-    const { data: updatedPoll } = await supabase
-      .from("polls_with_options")
-      .select("*")
-      .eq("id", pollId)
-      .single();
+    const query = `
+      SELECT
+        p.*,
+        o.id as option_id,
+        o.text as option_text,
+        o.votes as option_votes
+      FROM polls p
+      LEFT JOIN poll_options o ON p.id = o.poll_id
+      WHERE p.id = ?
+    `;
+
+    const rows = db.prepare(query).all(pollId) as PollWithOptionsRow[];
+
+    const firstRow = rows[0];
+    const updatedPoll = {
+      id: firstRow.id,
+      question: firstRow.question,
+      description: firstRow.description,
+      category: firstRow.category,
+      status: firstRow.status,
+      is_featured: firstRow.is_featured === 1,
+      expires_at: firstRow.expires_at,
+      created_at: firstRow.created_at,
+      options: [] as { id: string; text: string; votes: number; percentage: number }[],
+      total_votes: 0,
+    };
+
+    for (const row of rows) {
+      if (row.option_id) {
+        updatedPoll.options.push({
+          id: row.option_id,
+          text: row.option_text,
+          votes: row.option_votes,
+          percentage: 0,
+        });
+        updatedPoll.total_votes += row.option_votes;
+      }
+    }
+
+    for (const opt of updatedPoll.options) {
+      opt.percentage =
+        updatedPoll.total_votes > 0
+          ? Math.round((opt.votes / updatedPoll.total_votes) * 100)
+          : 0;
+    }
 
     return NextResponse.json({
       success: true,
@@ -122,6 +154,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       message: "Vote submitted successfully",
     });
   } catch (error) {
+    console.error("Error submitting vote:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
@@ -142,24 +175,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const supabase = createServerClient();
+    const db = getDb();
 
-    const { data: vote } = await supabase
-      .from("votes")
-      .select("option_id, created_at")
-      .eq("poll_id", pollId)
-      .eq("visitor_id", visitorId)
-      .single();
-
-    const voteData = vote as { option_id: string; created_at: string } | null;
+    const vote = db
+      .prepare(
+        "SELECT option_id, created_at FROM votes WHERE poll_id = ? AND visitor_id = ?"
+      )
+      .get(pollId, visitorId) as { option_id: string; created_at: string } | undefined;
 
     return NextResponse.json({
       success: true,
-      hasVoted: !!voteData,
-      votedOptionId: voteData?.option_id || null,
-      votedAt: voteData?.created_at || null,
+      hasVoted: !!vote,
+      votedOptionId: vote?.option_id || null,
+      votedAt: vote?.created_at || null,
     });
   } catch (error) {
+    console.error("Error checking vote:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

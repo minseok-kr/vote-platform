@@ -2,7 +2,7 @@ import { Header } from "@/components/header";
 import { FeaturedPoll } from "@/components/featured-poll";
 import { TrendingPolls } from "@/components/trending-polls";
 import { AllPolls } from "@/components/all-polls";
-import { getFeaturedPoll, getTrendingPolls, getPolls } from "@/lib/polls";
+import { getFeaturedPoll, getTrendingPolls, getPolls } from "@/lib/api";
 
 export const revalidate = 60; // Revalidate every 60 seconds
 

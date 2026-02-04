@@ -1,4 +1,3 @@
-export { supabase, createServerClient } from "./supabase";
-export * from "./polls";
+export * from "./api";
 export * from "./visitor";
 export * from "./utils";

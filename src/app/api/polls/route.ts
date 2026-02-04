@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createServerClient } from "@/lib/supabase";
+import { getDb, Poll } from "@/lib/db";
+import { v4 as uuidv4 } from "uuid";
 
 // Validation schema for creating a poll
 const createPollSchema = z.object({
@@ -22,10 +23,16 @@ const createPollSchema = z.object({
   expires_at: z.string().datetime(),
 });
 
+interface PollWithOptionsRow extends Poll {
+  option_id: string;
+  option_text: string;
+  option_votes: number;
+}
+
 // GET /api/polls - List polls
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient();
+    const db = getDb();
     const { searchParams } = new URL(request.url);
 
     const status = searchParams.get("status") as "active" | "completed" | null;
@@ -35,42 +42,113 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const offset = parseInt(searchParams.get("offset") || "0");
 
-    let query = supabase
-      .from("polls_with_options")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const whereConditions: string[] = [];
+    const params: (string | number)[] = [];
 
     if (status) {
-      query = query.eq("status", status);
+      whereConditions.push("p.status = ?");
+      params.push(status);
     }
 
     if (category) {
-      query = query.eq("category", category);
+      whereConditions.push("p.category = ?");
+      params.push(category);
     }
 
     if (featured === "true") {
-      query = query.eq("is_featured", true).limit(1);
+      whereConditions.push("p.is_featured = 1");
     } else if (trending === "true") {
-      query = query
-        .eq("status", "active")
-        .eq("is_featured", false)
-        .order("total_votes", { ascending: false })
-        .limit(limit);
+      whereConditions.push("p.status = 'active'");
+      whereConditions.push("p.is_featured = 0");
+    }
+
+    const whereClause =
+      whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
+
+    // Get polls with their options
+    const query = `
+      SELECT
+        p.*,
+        o.id as option_id,
+        o.text as option_text,
+        o.votes as option_votes
+      FROM polls p
+      LEFT JOIN poll_options o ON p.id = o.poll_id
+      ${whereClause}
+      ORDER BY ${trending === "true" ? "(SELECT SUM(votes) FROM poll_options WHERE poll_id = p.id) DESC" : "p.created_at DESC"}
+    `;
+
+    const rows = db.prepare(query).all(...params) as PollWithOptionsRow[];
+
+    // Group by poll
+    const pollsMap = new Map<
+      string,
+      {
+        id: string;
+        question: string;
+        description: string | null;
+        category: string;
+        status: string;
+        is_featured: boolean;
+        expires_at: string | null;
+        created_at: string;
+        options: { id: string; text: string; votes: number; percentage: number }[];
+        total_votes: number;
+      }
+    >();
+
+    for (const row of rows) {
+      if (!pollsMap.has(row.id)) {
+        pollsMap.set(row.id, {
+          id: row.id,
+          question: row.question,
+          description: row.description,
+          category: row.category,
+          status: row.status,
+          is_featured: row.is_featured === 1,
+          expires_at: row.expires_at,
+          created_at: row.created_at,
+          options: [],
+          total_votes: 0,
+        });
+      }
+
+      const poll = pollsMap.get(row.id)!;
+      if (row.option_id) {
+        poll.options.push({
+          id: row.option_id,
+          text: row.option_text,
+          votes: row.option_votes,
+          percentage: 0,
+        });
+        poll.total_votes += row.option_votes;
+      }
+    }
+
+    // Calculate percentages
+    const polls = Array.from(pollsMap.values());
+    for (const poll of polls) {
+      for (const option of poll.options) {
+        option.percentage =
+          poll.total_votes > 0
+            ? Math.round((option.votes / poll.total_votes) * 100)
+            : 0;
+      }
+    }
+
+    // Apply pagination
+    let result = polls;
+    if (featured === "true") {
+      result = polls.slice(0, 1);
+    } else if (trending === "true") {
+      result = polls.slice(0, limit);
     } else {
-      query = query.range(offset, offset + limit - 1);
+      result = polls.slice(offset, offset + limit);
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data: result });
   } catch (error) {
+    console.error("Error fetching polls:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
@@ -81,7 +159,7 @@ export async function GET(request: NextRequest) {
 // POST /api/polls - Create a poll
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient();
+    const db = getDb();
     const body = await request.json();
 
     // Validate input
@@ -94,50 +172,44 @@ export async function POST(request: NextRequest) {
     }
 
     const { question, description, category, options, expires_at } = result.data;
+    const pollId = uuidv4();
+    const now = new Date().toISOString();
 
     // Insert poll
-    const { data: poll, error: pollError } = await supabase
-      .from("polls")
-      .insert({
+    const insertPoll = db.prepare(`
+      INSERT INTO polls (id, question, description, category, expires_at, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const insertOption = db.prepare(`
+      INSERT INTO poll_options (id, poll_id, text, votes, created_at)
+      VALUES (?, ?, ?, 0, ?)
+    `);
+
+    const transaction = db.transaction(() => {
+      insertPoll.run(
+        pollId,
         question,
-        description,
+        description || null,
         category,
         expires_at,
-      } as never)
-      .select()
-      .single();
-
-    if (pollError || !poll) {
-      return NextResponse.json(
-        { success: false, error: pollError?.message || "Failed to create poll" },
-        { status: 500 }
+        now,
+        now
       );
-    }
 
-    const pollData = poll as { id: string };
+      for (const optionText of options) {
+        insertOption.run(uuidv4(), pollId, optionText, now);
+      }
+    });
 
-    // Insert options
-    const optionsToInsert = options.map((text) => ({
-      poll_id: pollData.id,
-      text,
-    }));
+    transaction();
 
-    const { error: optionsError } = await supabase
-      .from("poll_options")
-      .insert(optionsToInsert as never);
-
-    if (optionsError) {
-      // Rollback: delete the poll
-      await supabase.from("polls").delete().eq("id", pollData.id);
-
-      return NextResponse.json(
-        { success: false, error: optionsError.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ success: true, data: pollData }, { status: 201 });
+    return NextResponse.json(
+      { success: true, data: { id: pollId } },
+      { status: 201 }
+    );
   } catch (error) {
+    console.error("Error creating poll:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

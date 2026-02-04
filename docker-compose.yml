@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   vote-app:
     build:
@@ -7,7 +5,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    volumes:
+      - vote-data:/app/data
     restart: unless-stopped
+
+volumes:
+  vote-data:

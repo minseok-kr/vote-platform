@@ -1,60 +1,37 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
 import type { PollWithOptions } from "@/types";
 
 export function useRealtimePoll(initialPoll: PollWithOptions) {
   const [poll, setPoll] = useState<PollWithOptions>(initialPoll);
 
   const fetchLatestPoll = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("polls_with_options")
-      .select("*")
-      .eq("id", initialPoll.id)
-      .single();
+    try {
+      const res = await fetch(`/poll/api/polls/${initialPoll.id}`);
+      const data = await res.json();
 
-    if (!error && data) {
-      setPoll(data as PollWithOptions);
+      if (data.success && data.data) {
+        setPoll(data.data as PollWithOptions);
+      }
+    } catch (error) {
+      console.error("Failed to fetch poll:", error);
     }
   }, [initialPoll.id]);
 
   useEffect(() => {
-    // Subscribe to vote changes for this poll
-    const channel = supabase
-      .channel(`poll-${initialPoll.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "votes",
-          filter: `poll_id=eq.${initialPoll.id}`,
-        },
-        () => {
-          // Fetch latest poll data when a new vote is added
-          fetchLatestPoll();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "poll_options",
-          filter: `poll_id=eq.${initialPoll.id}`,
-        },
-        () => {
-          // Fetch latest poll data when options are updated
-          fetchLatestPoll();
-        }
-      )
-      .subscribe();
+    // Poll for updates every 5 seconds (simple polling instead of realtime)
+    const interval = setInterval(fetchLatestPoll, 5000);
 
     return () => {
-      supabase.removeChannel(channel);
+      clearInterval(interval);
     };
-  }, [initialPoll.id, fetchLatestPoll]);
+  }, [fetchLatestPoll]);
+
+  // Update poll when initialPoll changes
+  useEffect(() => {
+    setPoll(initialPoll);
+  }, [initialPoll]);
 
   return poll;
 }

@@ -1,6 +1,6 @@
 import { Header } from "@/components/header";
 import { CompletedPolls } from "@/components/completed-polls";
-import { getPolls } from "@/lib/polls";
+import { getPolls } from "@/lib/api";
 
 export const revalidate = 60;
 

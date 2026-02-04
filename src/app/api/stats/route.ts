@@ -1,66 +1,78 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 
 // GET /api/stats - Get platform statistics
 export async function GET() {
   try {
-    const supabase = createServerClient();
+    const db = getDb();
 
     // Get total polls count
-    const { count: totalPolls } = await supabase
-      .from("polls")
-      .select("*", { count: "exact", head: true });
+    const totalPolls = (
+      db.prepare("SELECT COUNT(*) as count FROM polls").get() as { count: number }
+    ).count;
 
     // Get active polls count
-    const { count: activePolls } = await supabase
-      .from("polls")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "active");
+    const activePolls = (
+      db
+        .prepare("SELECT COUNT(*) as count FROM polls WHERE status = 'active'")
+        .get() as { count: number }
+    ).count;
 
     // Get total votes
-    const { count: totalVotes } = await supabase
-      .from("votes")
-      .select("*", { count: "exact", head: true });
+    const totalVotes = (
+      db.prepare("SELECT COUNT(*) as count FROM votes").get() as { count: number }
+    ).count;
 
     // Get polls by category
-    const { data: categoryStats } = await supabase
-      .from("polls")
-      .select("category");
+    const categoryRows = db
+      .prepare("SELECT category FROM polls")
+      .all() as { category: string }[];
 
     const categoryCounts: Record<string, number> = {};
-    (categoryStats as { category: string }[] | null)?.forEach((poll) => {
-      categoryCounts[poll.category] = (categoryCounts[poll.category] || 0) + 1;
-    });
+    for (const row of categoryRows) {
+      categoryCounts[row.category] = (categoryCounts[row.category] || 0) + 1;
+    }
 
     // Get recent activity (votes in last 24h)
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const { count: recentVotes } = await supabase
-      .from("votes")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", yesterday.toISOString());
+    const recentVotes = (
+      db
+        .prepare(
+          "SELECT COUNT(*) as count FROM votes WHERE created_at >= ?"
+        )
+        .get(yesterday.toISOString()) as { count: number }
+    ).count;
 
     // Get top polls
-    const { data: topPolls } = await supabase
-      .from("polls_with_options")
-      .select("id, question, total_votes")
-      .order("total_votes", { ascending: false })
-      .limit(5);
+    const topPollsRows = db
+      .prepare(
+        `
+        SELECT p.id, p.question, SUM(o.votes) as total_votes
+        FROM polls p
+        LEFT JOIN poll_options o ON p.id = o.poll_id
+        GROUP BY p.id
+        ORDER BY total_votes DESC
+        LIMIT 5
+      `
+      )
+      .all() as { id: string; question: string; total_votes: number }[];
 
     return NextResponse.json({
       success: true,
       data: {
-        totalPolls: totalPolls || 0,
-        activePolls: activePolls || 0,
-        completedPolls: (totalPolls || 0) - (activePolls || 0),
-        totalVotes: totalVotes || 0,
-        recentVotes: recentVotes || 0,
+        totalPolls,
+        activePolls,
+        completedPolls: totalPolls - activePolls,
+        totalVotes,
+        recentVotes,
         categoryCounts,
-        topPolls: topPolls || [],
+        topPolls: topPollsRows,
       },
     });
   } catch (error) {
+    console.error("Error fetching stats:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch stats" },
       { status: 500 }

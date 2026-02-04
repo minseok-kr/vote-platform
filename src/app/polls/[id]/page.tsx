@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/header";
 import { PollDetail } from "@/components/poll-detail";
-import { getPoll } from "@/lib/polls";
+import { getPoll } from "@/lib/api";
 
 interface PageProps {
   params: Promise<{ id: string }>;
