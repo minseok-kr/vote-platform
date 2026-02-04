@@ -90,21 +90,23 @@ export async function createPoll(request: CreatePollRequest) {
       description: request.description,
       category: request.category || "other",
       expires_at: request.expires_at,
-    })
+    } as never)
     .select()
     .single();
 
-  if (pollError) throw pollError;
+  if (pollError || !poll) throw pollError;
+
+  const pollData = poll as { id: string };
 
   // Insert options
   const optionsToInsert = request.options.map((text) => ({
-    poll_id: poll.id,
+    poll_id: pollData.id,
     text,
   }));
 
   const { error: optionsError } = await supabase
     .from("poll_options")
-    .insert(optionsToInsert);
+    .insert(optionsToInsert as never);
 
   if (optionsError) throw optionsError;
 
@@ -130,12 +132,12 @@ export async function vote(request: VoteRequest) {
     poll_id: request.poll_id,
     option_id: request.option_id,
     visitor_id: request.visitor_id,
-  });
+  } as never);
 
   if (voteError) throw voteError;
 
   // Increment option votes
-  const { error: incrementError } = await supabase.rpc("increment_option_votes", {
+  const { error: incrementError } = await (supabase.rpc as Function)("increment_option_votes", {
     option_uuid: request.option_id,
   });
 
@@ -165,5 +167,6 @@ export async function getVisitorVote(pollId: string, visitorId: string) {
     .eq("visitor_id", visitorId)
     .single();
 
-  return data?.option_id || null;
+  const voteData = data as { option_id: string } | null;
+  return voteData?.option_id || null;
 }

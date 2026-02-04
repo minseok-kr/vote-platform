@@ -103,30 +103,32 @@ export async function POST(request: NextRequest) {
         description,
         category,
         expires_at,
-      })
+      } as never)
       .select()
       .single();
 
-    if (pollError) {
+    if (pollError || !poll) {
       return NextResponse.json(
-        { success: false, error: pollError.message },
+        { success: false, error: pollError?.message || "Failed to create poll" },
         { status: 500 }
       );
     }
 
+    const pollData = poll as { id: string };
+
     // Insert options
     const optionsToInsert = options.map((text) => ({
-      poll_id: poll.id,
+      poll_id: pollData.id,
       text,
     }));
 
     const { error: optionsError } = await supabase
       .from("poll_options")
-      .insert(optionsToInsert);
+      .insert(optionsToInsert as never);
 
     if (optionsError) {
       // Rollback: delete the poll
-      await supabase.from("polls").delete().eq("id", poll.id);
+      await supabase.from("polls").delete().eq("id", pollData.id);
 
       return NextResponse.json(
         { success: false, error: optionsError.message },
@@ -134,7 +136,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, data: poll }, { status: 201 });
+    return NextResponse.json({ success: true, data: pollData }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Internal server error" },

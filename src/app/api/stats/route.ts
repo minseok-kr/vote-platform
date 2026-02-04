@@ -28,7 +28,7 @@ export async function GET() {
       .select("category");
 
     const categoryCounts: Record<string, number> = {};
-    categoryStats?.forEach((poll) => {
+    (categoryStats as { category: string }[] | null)?.forEach((poll) => {
       categoryCounts[poll.category] = (categoryCounts[poll.category] || 0) + 1;
     });
 

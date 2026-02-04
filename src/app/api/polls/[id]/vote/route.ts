@@ -6,6 +6,12 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+interface PollRecord {
+  id: string;
+  status: string;
+  ends_at: string | null;
+}
+
 const voteSchema = z.object({
   optionId: z.string().uuid("Invalid option ID"),
   visitorId: z.string().min(1, "Visitor ID is required"),
@@ -43,14 +49,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    if (poll.status !== "active") {
+    const pollData = poll as PollRecord;
+
+    if (pollData.status !== "active") {
       return NextResponse.json(
         { success: false, error: "Poll is not active" },
         { status: 400 }
       );
     }
 
-    if (poll.ends_at && new Date(poll.ends_at) < new Date()) {
+    if (pollData.ends_at && new Date(pollData.ends_at) < new Date()) {
       return NextResponse.json(
         { success: false, error: "Poll has ended" },
         { status: 400 }
@@ -92,7 +100,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       poll_id: pollId,
       option_id: optionId,
       visitor_id: visitorId,
-    });
+    } as never);
 
     if (voteError) {
       return NextResponse.json(
@@ -143,11 +151,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .eq("visitor_id", visitorId)
       .single();
 
+    const voteData = vote as { option_id: string; created_at: string } | null;
+
     return NextResponse.json({
       success: true,
-      hasVoted: !!vote,
-      votedOptionId: vote?.option_id || null,
-      votedAt: vote?.created_at || null,
+      hasVoted: !!voteData,
+      votedOptionId: voteData?.option_id || null,
+      votedAt: voteData?.created_at || null,
     });
   } catch (error) {
     return NextResponse.json(
